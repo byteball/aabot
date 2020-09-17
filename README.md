@@ -8,8 +8,8 @@ Use it in your trading bots that need to predict the future state of Autonomous 
 nodejs 8+
 
 ## Usage
-Add as a dependency in your package.json
-```json
+Add as a dependency in your package.json:
+```
   "dependencies": {
 	...
 	"aabot": "git+https://github.com/byteball/aabot.git",
@@ -17,7 +17,7 @@ Add as a dependency in your package.json
   },
 ```
 
-Require
+Require:
 ```js
 const conf = require('ocore/conf.js');
 const aa_state = require('aabot/aa_state.js');
@@ -35,7 +35,7 @@ Start following an AA:
 ```js
 await aa_state.followAA(aa_address);
 ```
-From now on, all triggers to this AA will be executed immediately upon receipt and an estimation of the future AA state available as:
+From now on, all triggers to this AA will be executed immediately upon receipt and an estimation of the future AA state will be available as:
 ```js
 // returns the estimated future state of all followed AAs, this object can be used in calls 
 // to aa_composer.estimatePrimaryAATrigger() if you want to estimate the effects of a trigger 
@@ -125,7 +125,7 @@ Some useful functions to inspect the final (not upcoming) state of the DAG.
 
 Read several state vars by prefix of variable name:
 ```js
-const vars = await dag,readAAStateVars(aa_address, var_prefix);
+const vars = await dag.readAAStateVars(aa_address, var_prefix);
 ```
 Read a single state var:
 ```js
