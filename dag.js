@@ -251,11 +251,11 @@ async function sendPayment({ to_address, amount, asset, data }) {
 	}
 	try {
 		let { unit } = await headlessWallet.sendMultiPayment(opts);
-		console.log("sent " + amount + " to " + address + ", unit " + unit);
+		console.log("sent " + amount + " to " + to_address + ", unit " + unit);
 		return unit;
 	}
 	catch (e) {
-		console.error("failed to send " + amount + " to " + address + ": " + e);
+		console.error("failed to send " + amount + " to " + to_address + ": " + e);
 		return null;
 	}
 }
