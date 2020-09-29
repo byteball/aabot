@@ -34,7 +34,11 @@ function getUpcomingStateVars() {
 
 // should be accessed under lock, otherwise might return state vars in the middle of replayPendingTriggers()
 function getUpcomingAAStateVars(aa_address) {
-	return formulaEvaluation.stateVars2assoc(upcomingStateVars[aa_address]);
+	let vars = formulaEvaluation.stateVars2assoc(upcomingStateVars[aa_address]);
+	for (let var_name in vars)
+		if (vars[var_name] === false) // deleted var
+			delete vars[var_name];
+	return vars;
 }
 
 function getBalances() {
