@@ -161,7 +161,8 @@ function requestFromLightVendorWithRetries(command, params, cb, count_retries) {
 				return setTimeout(() => requestFromLightVendorWithRetries(command, params, cb, count_retries + 1), 5000);
 			}
 			else
-				throw Error(`got ${response.error} from ${command} ${JSON.stringify(params)}`);
+				console.log(`got ${response.error} from ${command} ${JSON.stringify(params)}`);
+			//	throw Error(`got ${response.error} from ${command} ${JSON.stringify(params)}`);
 		}
 		cb(response);
 	});
