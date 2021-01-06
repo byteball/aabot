@@ -29,7 +29,13 @@ async function updateDataFeed(oracle_address, feed_name, bForce) {
 		return console.log(`oracle ${oracle_address}:${feed_name} data is up to date`);
 	console.log(`will update oracle ${oracle_address}:${feed_name}`);
 	const prev_value = oracle.value;
-	oracle.value = await dag.getDataFeed(oracle_address, feed_name);
+	try {
+		oracle.value = await dag.getDataFeed(oracle_address, feed_name);
+	}
+	catch (e) {
+		console.log(`getting data feed ${oracle_address}:${feed_name} failed:`, e);
+		// oracle.value stays undefined if the data feed doesn't exist
+	}
 	oracle.ts = Date.now();
 	const bUpdated = (oracle.value !== prev_value);
 	console.log(`oracles now`, JSON.stringify(oracles));
