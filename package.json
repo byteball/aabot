@@ -13,6 +13,7 @@
 		"byteball"
 	],
 	"dependencies": {
+		"lodash": "^4.6.1",
 		"ocore": "git+https://github.com/byteball/ocore.git",
 		"headless-obyte": "git+https://github.com/byteball/headless-obyte.git"
 	},

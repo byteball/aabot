@@ -7,6 +7,7 @@ const mutex = require('ocore/mutex.js');
 const aa_composer = require('ocore/aa_composer.js');
 const formulaEvaluation = require("ocore/formula/evaluation.js");
 const dag = require('./dag.js');
+const wrappedObject = formulaEvaluation.wrappedObject;
 
 let assocFollowedAAs = {};
 
@@ -18,6 +19,11 @@ let upcomingBalances = {};
 let arrPendingTriggers = [];
 
 let last_trigger_unit;
+
+function customizer(value) {
+	if (value instanceof wrappedObject)
+		return new wrappedObject(_.cloneDeep(value.obj));
+}
 
 function getStateVars() {
 	return stateVars;
@@ -76,7 +82,7 @@ async function getFinalUpcomingAAStateVars(aa_address) {
 function addStateVars(address, assoc) {
 	let sv = formulaEvaluation.assoc2stateVars(assoc);
 	stateVars[address] = sv;
-	upcomingStateVars[address] = _.cloneDeep(sv);
+	upcomingStateVars[address] = _.cloneDeepWith(sv, customizer);
 }
 
 function addBalances(address, balancesByAsset) {
@@ -200,7 +206,7 @@ function onAADefinition(objUnit) {
 async function replayPendingTriggers() {
 	console.log(`will replay ${arrPendingTriggers.length} pending triggers`);
 	upcomingBalances = _.cloneDeep(balances);
-	upcomingStateVars = _.cloneDeep(stateVars);
+	upcomingStateVars = _.cloneDeepWith(stateVars, customizer);
 	for (let pt of arrPendingTriggers) {
 		console.log('replaying trigger ' + pt.unit.unit + ' to ' + pt.aa_address);
 		await aa_composer.estimatePrimaryAATrigger(pt.unit, pt.aa_address, upcomingStateVars, upcomingBalances);
