@@ -27,17 +27,24 @@ function readAAStateVar(aa_address, var_name, cb) {
 function readAAStateVars(aa_address, var_prefix, cb) {
 	if (!cb)
 		return new Promise(resolve => readAAStateVars(aa_address, var_prefix, resolve));
-	conf.bLight ? readAAStateVarsLight(aa_address, var_prefix, cb) : readAAStateVarsFull(aa_address, var_prefix, cb);
+	conf.bLight ? readAAStateVarsLight(aa_address, var_prefix, var_prefix, cb) : readAAStateVarsFull(aa_address, var_prefix, cb);
 }
 
 function readAAStateVarsFull(aa_address, var_prefix, cb) {
 	storage.readAAStateVars(aa_address, var_prefix, var_prefix, 0, cb);
 }
 
-function readAAStateVarsLight(aa_address, var_prefix, cb) {
-	requestFromLightVendorWithRetries('light/get_aa_state_vars', { address: aa_address, var_prefix: var_prefix }, function (response) {
+function readAAStateVarsLight(aa_address, var_prefix_from, var_prefix_to, cb) {
+	requestFromLightVendorWithRetries('light/get_aa_state_vars', { address: aa_address, var_prefix_from, var_prefix_to }, function (response) {
 		let assocVars = response;
-		cb(assocVars);
+		let names = Object.keys(assocVars);
+		if (names.length < network.MAX_STATE_VARS)
+			return cb(assocVars);
+		// request again starting from the last variable
+		readAAStateVarsLight(aa_address, names[names.length - 1], var_prefix_to, (assocMoreVars) => {
+			Object.assign(assocVars, assocMoreVars);
+			cb(assocVars);
+		});
 	});
 }
 
