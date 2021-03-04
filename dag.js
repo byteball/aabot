@@ -238,16 +238,22 @@ async function sendMessage({ to_address, amount, app, payload }) {
 	}
 }
 
-async function sendPayment({ to_address, amount, asset, data }) {
+async function sendPayment({ to_address, amount, asset, data, is_aa }) {
 	let opts = {
-		to_address: to_address,
-		amount: amount,
 		paying_addresses: [operator.getAddress()],
 		change_address: operator.getAddress(),
 		spend_unconfirmed: 'all',
 	};
 	if (asset && asset !== 'base')
 		opts.asset = asset;
+	if (opts.asset && is_aa) {
+		opts.base_outputs = [{ address: to_address, amount: constants.MIN_BYTES_BOUNCE_FEE }];
+		opts.asset_outputs = [{ address: to_address, amount }];
+	}
+	else {
+		opts.to_address = to_address;
+		opts.amount = amount;
+	}
 	if (data) {
 		let message = {
 			app: 'data',
