@@ -260,6 +260,11 @@ eventBus.on("message_for_light", (ws, subject, body) => {
 	}
 });
 
+// full only
+eventBus.on("aa_definition_saved", async (payload, unit) => {
+	const objJoint = await dag.readJoint(unit);
+	onAADefinition(objJoint.unit);
+});
 
 exports.addStateVars = addStateVars;
 exports.getStateVars = getStateVars;
