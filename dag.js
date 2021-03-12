@@ -116,14 +116,13 @@ async function loadAA(aa_address) {
 	const definition = JSON.parse(definition_rows[0].definition);
 	if (definition[1].base_aa)
 		await aa_addresses.readAADefinitions([definition[1].base_aa]); // make sure the base AA is in our database
+	return definition;
 }
 
 async function readAAParams(aa_address) {
-	const definition_rows = await aa_addresses.readAADefinitions([aa_address]);
-	const definition = JSON.parse(definition_rows[0].definition);
+	const definition = await loadAA(aa_address);
 	if (!definition[1].base_aa)
 		throw Error("not a parameterized AA: " + aa_address);
-	await aa_addresses.readAADefinitions([definition[1].base_aa]); // make sure the base AA is in our database
 	return definition[1].params;
 }
 
