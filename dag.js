@@ -189,6 +189,25 @@ function readJoint(unit, cb, bRetrying) {
 	});
 }
 
+function getLastStableUnitProps(cb) {
+	if (!cb)
+		return new Promise((resolve, reject) => getLastStableUnitProps((err, res) => {
+			err ? reject(err) : resolve(res);
+		}));
+	if (conf.bLight) {
+		requestFromLightVendorWithRetries('get_last_stable_unit_props', null, response => cb(response.error, response));
+	}
+	else {
+		storage.readLastStableMcUnitProps(db, function (props) {
+			cb(null, {
+				unit: props.unit,
+				main_chain_index: props.main_chain_index,
+				timestamp: props.timestamp,
+			});
+		});
+	}
+}
+
 async function sendAARequest(to_address, data) {
 	return await sendMessage({
 		to_address,
@@ -275,6 +294,7 @@ async function sendPayment({ to_address, amount, asset, data, is_aa }) {
 
 
 exports.readJoint = readJoint;
+exports.getLastStableUnitProps = getLastStableUnitProps;
 exports.readAADefinition = readAADefinition;
 exports.loadAA = loadAA;
 exports.readAAParams = readAAParams;
