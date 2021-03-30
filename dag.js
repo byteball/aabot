@@ -24,7 +24,7 @@ function readAAStateVar(aa_address, var_name, cb) {
 	});
 }
 
-function readAAStateVars(aa_address, var_prefix, cb) {
+function readAAStateVars(aa_address, var_prefix = '', cb) {
 	if (!cb)
 		return new Promise(resolve => readAAStateVars(aa_address, var_prefix, resolve));
 	conf.bLight ? readAAStateVarsLight(aa_address, var_prefix, var_prefix, cb) : readAAStateVarsFull(aa_address, var_prefix, cb);
