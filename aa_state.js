@@ -195,12 +195,15 @@ async function onAARequest(objAARequest) {
 }
 
 function onAADefinition(objUnit) {
-	const definitionPayload = objUnit.messages.find(m => m.app === 'definition').payload;
-	const address = definitionPayload.address;
-	const definition = definitionPayload.definition;
-	const base_aa = definition[1].base_aa;
-	eventBus.emit('aa_definition_applied-' + base_aa, address, definition, objUnit);
-	eventBus.emit('aa_definition_applied', address, definition, objUnit);
+	const definitionMessages = objUnit.messages.filter(m => m.app === 'definition');
+	for (let message of definitionMessages) {
+		const definitionPayload = message.payload;
+		const address = definitionPayload.address;
+		const definition = definitionPayload.definition;
+		const base_aa = definition[1].base_aa;
+		eventBus.emit('aa_definition_applied-' + base_aa, address, definition, objUnit);
+		eventBus.emit('aa_definition_applied', address, definition, objUnit);
+	}
 }
 
 async function replayPendingTriggers() {
