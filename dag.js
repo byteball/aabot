@@ -256,22 +256,38 @@ async function sendMessage({ to_address, amount, app, payload }) {
 	}
 }
 
-async function sendPayment({ to_address, amount, asset, data, is_aa }) {
+async function sendPayment({ to_address, amount, asset, amountsByAsset, data, is_aa }) {
+	if (amountsByAsset && (amount || asset))
+		throw Error(`amountsByAsset combined with amount or asset`);
 	let opts = {
 		paying_addresses: [operator.getAddress()],
 		change_address: operator.getAddress(),
 		spend_unconfirmed: 'all',
 	};
-	if (asset && asset !== 'base')
-		opts.asset = asset;
-	if (opts.asset && is_aa) {
-		opts.base_outputs = [{ address: to_address, amount: constants.MIN_BYTES_BOUNCE_FEE }];
-		opts.asset_outputs = [{ address: to_address, amount }];
+	if (amountsByAsset) {
+		opts.outputs_by_asset = {};
+		if (is_aa) {
+			if (!amountsByAsset.base)
+				amountsByAsset.base = constants.MIN_BYTES_BOUNCE_FEE;
+			else if (amountsByAsset.base < constants.MIN_BYTES_BOUNCE_FEE)
+				throw Error(`bytes payment ${amountsByAsset.base} is less than bounce fees`);
+		}
+		for (let asset in amountsByAsset)
+			opts.outputs_by_asset[asset] = [{ address: to_address, amount: amountsByAsset[asset] }];
 	}
 	else {
-		opts.to_address = to_address;
-		opts.amount = amount;
+		if (asset && asset !== 'base')
+			opts.asset = asset;
+		if (opts.asset && is_aa) {
+			opts.base_outputs = [{ address: to_address, amount: constants.MIN_BYTES_BOUNCE_FEE }];
+			opts.asset_outputs = [{ address: to_address, amount }];
+		}
+		else {
+			opts.to_address = to_address;
+			opts.amount = amount;
+		}
 	}
+	const desc = amountsByAsset ? JSON.stringify(amountsByAsset) : amount;;
 	if (data) {
 		let message = {
 			app: 'data',
@@ -283,11 +299,11 @@ async function sendPayment({ to_address, amount, asset, data, is_aa }) {
 	}
 	try {
 		let { unit } = await headlessWallet.sendMultiPayment(opts);
-		console.log("sent " + amount + " to " + to_address + ", unit " + unit);
+		console.log("sent " + desc + " to " + to_address + ", unit " + unit);
 		return unit;
 	}
 	catch (e) {
-		console.error("failed to send " + amount + " to " + to_address + ": " + e);
+		console.error("failed to send " + desc + " to " + to_address + ": " + e);
 		return null;
 	}
 }
