@@ -54,8 +54,12 @@ function executeGetter(aa_address, getter, args, cb) {
 			err ? reject(err) : resolve(res);
 		}));
 	let params = { address: aa_address, getter };
-	if (args)
-		params.args = args;
+	if (args) {
+		if (!Array.isArray(args))
+			throw Error(`args must be an array, got ${args}`);
+		if (args.length > 0) // skip empty argument list
+			params.args = args;
+	}
 	if (conf.bLight)
 		requestFromLightVendorWithRetries('light/execute_getter', params, response => cb(response.error, response.result));
 	else
