@@ -327,4 +327,5 @@ exports.executeGetter = executeGetter;
 exports.getAAsByBaseAAs = getAAsByBaseAAs;
 exports.sendAARequest = sendAARequest;
 exports.defineAA = defineAA;
+exports.sendMessage = sendMessage;
 exports.sendPayment = sendPayment;
