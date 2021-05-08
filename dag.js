@@ -1,5 +1,6 @@
 "use strict";
 
+const fs = require("fs");
 const constants = require('ocore/constants.js');
 const objectHash = require('ocore/object_hash.js');
 const db = require('ocore/db.js');
@@ -8,6 +9,7 @@ const balances = require('ocore/balances.js');
 const network = require('ocore/network.js');
 const data_feeds = require('ocore/data_feeds.js');
 const formulaEvaluation = require('ocore/formula/evaluation.js');
+const parse_ojson = require('ocore/formula/parse_ojson');
 const conf = require('ocore/conf.js');
 const aa_addresses = require("ocore/aa_addresses.js");
 const headlessWallet = require('headless-obyte');
@@ -231,6 +233,19 @@ async function defineAA(definition) {
 	});
 }
 
+function parseOjson(str) {
+	return new Promise((resolve, reject) => parse_ojson.parse(str, (err, definition) => err ? reject(err) : resolve(definition)));
+}
+
+async function deployAAFromFile(filename) {
+	const str = fs.readFileSync(filename, 'utf8');
+	let definition = await parseOjson(str);
+	const unit = await defineAA(definition);
+	if (!unit)
+		throw Error(`failed to deploy ${filename}`);
+	return unit;
+}
+
 async function sendMessage({ to_address, amount, app, payload }) {
 	let json = JSON.stringify(payload);
 	let message = {
@@ -327,5 +342,6 @@ exports.executeGetter = executeGetter;
 exports.getAAsByBaseAAs = getAAsByBaseAAs;
 exports.sendAARequest = sendAARequest;
 exports.defineAA = defineAA;
+exports.deployAAFromFile = deployAAFromFile;
 exports.sendMessage = sendMessage;
 exports.sendPayment = sendPayment;
