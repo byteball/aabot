@@ -10,6 +10,7 @@ const network = require('ocore/network.js');
 const data_feeds = require('ocore/data_feeds.js');
 const formulaEvaluation = require('ocore/formula/evaluation.js');
 const parse_ojson = require('ocore/formula/parse_ojson');
+const eventBus = require('ocore/event_bus.js');
 const conf = require('ocore/conf.js');
 const aa_addresses = require("ocore/aa_addresses.js");
 const headlessWallet = require('headless-obyte');
