@@ -346,6 +346,15 @@ async function sendPayment({ to_address, amount, asset, amountsByAsset, data, is
 	}
 }
 
+async function getAAResponseToMyTrigger(aa_address, trigger_unit) {
+	await headlessWallet.waitUntilMyUnitBecameStable(trigger_unit);
+	const [aa_response] = await db.query("SELECT * FROM aa_responses WHERE aa_address=? AND trigger_unit=?", [aa_address, trigger_unit]);
+	if (!aa_response)
+		throw Error(`no response to ${trigger_unit}`);
+	aa_response.response = JSON.parse(aa_response.response);
+	return aa_response;
+}
+
 
 exports.readJoint = readJoint;
 exports.getLastStableUnitProps = getLastStableUnitProps;
@@ -365,3 +374,4 @@ exports.deployAAFromFile = deployAAFromFile;
 exports.defineAsset = defineAsset;
 exports.sendMessage = sendMessage;
 exports.sendPayment = sendPayment;
+exports.getAAResponseToMyTrigger = getAAResponseToMyTrigger;
