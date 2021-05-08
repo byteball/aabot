@@ -246,6 +246,25 @@ async function deployAAFromFile(filename) {
 	return unit;
 }
 
+
+async function defineAsset(assetProps = {}) {
+	if (assetProps.is_private === undefined)
+		assetProps.is_private = false;
+	if (assetProps.is_transferrable === undefined)
+		assetProps.is_transferrable = true;
+	if (assetProps.auto_destroy === undefined)
+		assetProps.auto_destroy = false;
+	if (assetProps.fixed_denominations === undefined)
+		assetProps.fixed_denominations = false;
+	if (assetProps.issued_by_definer_only === undefined)
+		assetProps.issued_by_definer_only = true;
+	if (assetProps.cosigned_by_definer === undefined)
+		assetProps.cosigned_by_definer = false;
+	if (assetProps.spender_attested === undefined)
+		assetProps.spender_attested = false;
+	return await sendMessage({ app: 'asset', payload: assetProps });
+}
+
 async function sendMessage({ to_address, amount, app, payload }) {
 	let json = JSON.stringify(payload);
 	let message = {
@@ -343,5 +362,6 @@ exports.getAAsByBaseAAs = getAAsByBaseAAs;
 exports.sendAARequest = sendAARequest;
 exports.defineAA = defineAA;
 exports.deployAAFromFile = deployAAFromFile;
+exports.defineAsset = defineAsset;
 exports.sendMessage = sendMessage;
 exports.sendPayment = sendPayment;
