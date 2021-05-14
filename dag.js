@@ -182,6 +182,8 @@ function requestFromLightVendorWithRetries(command, params, cb, count_retries) {
 }
 
 function readJoint(unit, cb, bRetrying) {
+	if (!unit)
+		throw Error(`no unit in readJoint`);
 	if (!cb)
 		return new Promise(resolve => readJoint(unit, resolve));
 	storage.readJoint(db, unit, {
