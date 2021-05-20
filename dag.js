@@ -240,9 +240,17 @@ function parseOjson(str) {
 	return new Promise((resolve, reject) => parse_ojson.parse(str, (err, definition) => err ? reject(err) : resolve(definition)));
 }
 
-async function deployAAFromFile(filename) {
+async function deployAAFromFile(filename, deployEvenIfAlreadyExists = false) {
 	const str = fs.readFileSync(filename, 'utf8');
-	let definition = await parseOjson(str);
+	const definition = await parseOjson(str);
+	if (!deployEvenIfAlreadyExists) {
+		const aa_address = objectHash.getChash160(definition);
+		const definition_rows = await aa_addresses.readAADefinitions([aa_address]);
+		if (definition_rows.length > 0) {
+			console.log(`AA ${aa_address} from ${filename} already deployed`);
+			return null;
+		}
+	}
 	const unit = await defineAA(definition);
 	if (!unit)
 		throw Error(`failed to deploy ${filename}`);
