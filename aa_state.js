@@ -190,8 +190,8 @@ async function onAARequest(objAARequest) {
 	console.log(`--- estimated responses`, JSON.stringify(arrResponses, null, 2));
 	arrPendingTriggers.push(objAARequest);
 	unlock();
-	eventBus.emit('aa_request_applied-' + aa_address, objAARequest);
-	eventBus.emit('aa_request_applied', objAARequest);
+	eventBus.emit('aa_request_applied-' + aa_address, objAARequest, arrResponses);
+	eventBus.emit('aa_request_applied', objAARequest, arrResponses);
 }
 
 function onAADefinition(objUnit) {
