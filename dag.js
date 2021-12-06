@@ -171,7 +171,7 @@ function requestFromLightVendorWithRetries(command, params, cb, count_retries) {
 				console.log(`got ${response.error} from ${command} ${JSON.stringify(params)}`);
 				if (count_retries > 3)
 					throw Error("got error after 3 retries: " + response.error);
-				return setTimeout(() => requestFromLightVendorWithRetries(command, params, cb, count_retries + 1), 5000);
+				return setTimeout(() => requestFromLightVendorWithRetries(command, params, cb, count_retries + 1), 10000);
 			}
 			else
 				console.log(`got ${response.error} from ${command} ${JSON.stringify(params)}`);
