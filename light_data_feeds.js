@@ -58,7 +58,7 @@ eventBus.on('new_joint', objJoint => {
 	for (let address of author_addresses)
 		for (let oracle of oracles)
 			if (oracle.address === address && df[oracle.feed_name]) {
-				console.log(`received new value of data feed ${oracle.address}:${oracle.feed_name}`, df[oracle.feed_name]);
+				console.log(`${objUnit.unit}: received new value of data feed ${oracle.address}:${oracle.feed_name}`, df[oracle.feed_name]);
 				oracle.value = string_utils.getFeedValue(df[oracle.feed_name]);
 				oracle.ts = Date.now();
 			}
