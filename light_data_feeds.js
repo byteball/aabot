@@ -8,11 +8,21 @@ const dag = require('./dag.js');
 const ORACLE_DATA_LIFETIME = 60 * 1000;
 let oracles = [];
 
+function getValueBeforeTimestamp(oracle, timestamp) {
+	let timestamps = Object.keys(oracle.values);
+	timestamps.sort().reverse(); // from latest
+	for (let ts of timestamps)
+		if (ts <= timestamp)
+			return oracle.values[ts];
+	console.log(`oracle ${oracle.address}:${oracle.feed_name}: no past value before ${timestamp}, will use the last known value ${oracle.value}`);
+	return oracle.value;
+}
+
 // replace the function
-data_feeds.readDataFeedValue = function (arrAddresses, feed_name, value, min_mci, max_mci, bAA, ifseveral, handleResult) {
+data_feeds.readDataFeedValue = function (arrAddresses, feed_name, value, min_mci, max_mci, bAA, ifseveral, timestamp, handleResult) {
 	for (let oracle of oracles) {
 		if (arrAddresses.includes(oracle.address) && feed_name === oracle.feed_name)
-			return handleResult({ value: oracle.value });
+			return handleResult({ value: getValueBeforeTimestamp(oracle, timestamp) });
 	}
 	throw Error("light data feed not found: " + arrAddresses + ":" + feed_name);
 }
@@ -21,7 +31,7 @@ function getOracle(address, feed_name) {
 	for (let oracle of oracles)
 		if (oracle.address === address && oracle.feed_name === feed_name)
 			return oracle;
-	let oracle = { address, feed_name, ts: 0 };
+	let oracle = { address, feed_name, ts: 0, values: {} }; // values holds past values keyed by timestamp, they are necessary for replaying old triggers
 	oracles.push(oracle);
 	return oracle;
 }
@@ -59,7 +69,12 @@ eventBus.on('new_joint', objJoint => {
 		for (let oracle of oracles)
 			if (oracle.address === address && df[oracle.feed_name]) {
 				console.log(`${objUnit.unit}: received new value of data feed ${oracle.address}:${oracle.feed_name}`, df[oracle.feed_name]);
-				oracle.value = string_utils.getFeedValue(df[oracle.feed_name]);
+				const value = string_utils.getFeedValue(df[oracle.feed_name]);
+				oracle.value = value;
+				oracle.values[objUnit.timestamp] = value;
+				for (let ts in oracle.values) // delete old values
+					if (ts < Date.now() / 1000 - 12 * 3600)
+						delete oracle.values[ts];
 				oracle.ts = Date.now();
 			}
 });
