@@ -133,7 +133,7 @@ async function lock() {
 
 function getResponseEssentials(objAAResponse) {
 	const { mci, timestamp, bounced, response: { responseVars } } = objAAResponse;
-	return { mci, timestamp, bounced, responseVars };
+	return { timestamp, bounced, responseVars }; // mci is always wrong
 }
 
 async function onAAResponse(objAAResponse) {
