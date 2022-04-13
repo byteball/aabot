@@ -20,6 +20,8 @@ let arrPendingTriggers = [];
 
 let last_trigger_unit;
 
+let expectedResponses = {};
+
 function customizer(value) {
 	if (value instanceof wrappedObject)
 		return new wrappedObject(_.cloneDeep(value.obj));
@@ -129,21 +131,36 @@ async function lock() {
 	return unlock;
 }
 
+function getResponseEssentials(objAAResponse) {
+	const { mci, timestamp, bounced, response: { responseVars } } = objAAResponse;
+	return { mci, timestamp, bounced, responseVars };
+}
+
 async function onAAResponse(objAAResponse) {
 	const unlock = await lock();
 	console.log(`onAAResponse`, objAAResponse);
-	const aa_address = objAAResponse.aa_address;
-	if (objAAResponse.trigger_initial_unit !== last_trigger_unit) { 
-		removeExecutedPendingTriggers(objAAResponse.trigger_initial_unit);
-		last_trigger_unit = objAAResponse.trigger_initial_unit;
+	const { aa_address, trigger_address, trigger_unit, trigger_initial_unit, updatedStateVars, balances } = objAAResponse;
+	const expectedResponse = expectedResponses[trigger_unit];
+	if (expectedResponse) {
+		const essentials = getResponseEssentials(objAAResponse);
+		const same = _.isEqual(expectedResponse, essentials);
+		const matches = same ? 'matches' : 'mismatches';
+		console.log(`trigger ${trigger_unit} from ${trigger_address} to ${aa_address}: response ${matches} expectations`);
+		if (!same)
+			console.log('expected', expectedResponse, 'actual', essentials);
+		delete expectedResponses[trigger_unit];
+	}
+	if (trigger_initial_unit !== last_trigger_unit) { 
+		removeExecutedPendingTriggers(trigger_initial_unit);
+		last_trigger_unit = trigger_initial_unit;
 	}
 	else // we are called several times when a chain is executed
 		console.log(`repeated response to ${last_trigger_unit}`);
-	if (objAAResponse.updatedStateVars) {
-		for (let address in objAAResponse.updatedStateVars) {
+	if (updatedStateVars) {
+		for (let address in updatedStateVars) {
 			if (!stateVars[address])
 				stateVars[address] = {};
-			let vars = objAAResponse.updatedStateVars[address];
+			let vars = updatedStateVars[address];
 			for (let var_name in vars) {
 				let varInfo = vars[var_name];
 				console.log(`updating: ${address} : ${var_name} = ${JSON.stringify(varInfo, null, 2)}`);
@@ -160,9 +177,9 @@ async function onAAResponse(objAAResponse) {
 			}
 		}
 	}
-	if (!objAAResponse.balances) // balances are available only in light wallets, they are added to the notifications we receive from the light vendor
+	if (!balances) // balances are available only in light wallets, they are added to the notifications we receive from the light vendor
 		throw Error("no balances in AA response");
-	balances[aa_address] = objAAResponse.balances;
+	balances[aa_address] = balances;
 //	await updateBalances(objAAResponse);
 	await replayPendingTriggers();
 	unlock();
@@ -171,13 +188,13 @@ async function onAAResponse(objAAResponse) {
 }
 
 async function onAARequest(objAARequest) {
-	const aa_address = objAARequest.aa_address;
-	const objUnit = objAARequest.unit;
-	if (!objUnit.messages) // final-bad
+	const { aa_address, unit: objUnit } = objAARequest;
+	const { unit, messages } = objUnit;
+	if (!messages) // final-bad
 		return console.log("no messages");
 	const unlock = await lock();
-	if (arrPendingTriggers.find(pt => pt.unit.unit === objUnit.unit)) {
-		console.log(`trigger ${objUnit.unit} already queued`);
+	if (arrPendingTriggers.find(pt => pt.unit.unit === unit)) {
+		console.log(`trigger ${unit} already queued`);
 		return unlock();
 	}
 	console.log(`onAARequest`, objAARequest);
@@ -188,6 +205,7 @@ async function onAARequest(objAARequest) {
 	}
 	let arrResponses = await aa_composer.estimatePrimaryAATrigger(objUnit, aa_address, upcomingStateVars, upcomingBalances);
 	console.log(`--- estimated responses`, JSON.stringify(arrResponses, null, 2));
+	expectedResponses[unit] = getResponseEssentials(arrResponses[0])
 	arrPendingTriggers.push(objAARequest);
 	unlock();
 	eventBus.emit('aa_request_applied-' + aa_address, objAARequest, arrResponses);
