@@ -12,8 +12,10 @@ function getValueBeforeTimestamp(oracle, timestamp) {
 	let timestamps = Object.keys(oracle.values);
 	timestamps.sort().reverse(); // from latest
 	for (let ts of timestamps)
-		if (ts <= timestamp)
+		if (ts <= timestamp) {
+			console.log(`using ${oracle.address}:${oracle.feed_name} df value ${oracle.values[ts]} received at ${new Date(ts * 1000).toISOString()}`);
 			return oracle.values[ts];
+		}
 	console.log(`oracle ${oracle.address}:${oracle.feed_name}: no past value before ${timestamp}, will use the last known value ${oracle.value}`);
 	return oracle.value;
 }
