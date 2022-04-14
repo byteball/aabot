@@ -133,11 +133,12 @@ async function lock() {
 
 function getResponseEssentials(objAAResponse) {
 	const { mci, timestamp, bounced, objResponseUnit, response: { responseVars } } = objAAResponse;
-	let { messages } = objResponseUnit || {};
-	messages = _.cloneDeep(messages);
-	for (let m of messages) {
-		delete m.payload_location;
-		delete m.payload_hash;
+	if (objResponseUnit) {
+		var messages = _.cloneDeep(objResponseUnit.messages);
+		for (let m of messages) {
+			delete m.payload_location;
+			delete m.payload_hash;
+		}
 	}
 	return { timestamp, bounced, responseVars, messages }; // mci is always wrong
 }
