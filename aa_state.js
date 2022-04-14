@@ -132,13 +132,29 @@ async function lock() {
 }
 
 function getResponseEssentials(objAAResponse) {
-	const { mci, timestamp, bounced, objResponseUnit, response: { responseVars } } = objAAResponse;
+	const { mci, timestamp, bounced, aa_address, objResponseUnit, response: { responseVars } } = objAAResponse;
 	if (objResponseUnit) {
 		var messages = _.cloneDeep(objResponseUnit.messages);
 		for (let m of messages) {
 			delete m.payload_location;
 			delete m.payload_hash;
+			if (m.app === 'payment') {
+				if (!m.payload.asset)
+					m.payload.asset = 'base';
+				delete m.payload.inputs;
+				m.payload.outputs = m.payload.outputs.filter(o => o.address !== aa_address);
+			}
 		}
+		messages.sort((m1, m2) => {
+			if (m1.app < m2.app)
+				return -1;
+			if (m1.app > m2.app)
+				return 1;
+			if (m1.app === 'payment')
+				return (m1.payload.asset < m2.payload.asset) ? -1 : 1;
+			console.log(`unsorted app`, m1, m2);
+			return 1;
+		});
 	}
 	return { timestamp, bounced, responseVars, messages }; // mci is always wrong
 }
