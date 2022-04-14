@@ -154,7 +154,7 @@ async function onAAResponse(objAAResponse) {
 		const matches = same ? 'matches' : 'mismatches';
 		console.log(`trigger ${trigger_unit} from ${trigger_address} to ${aa_address}: response ${matches} expectations`);
 		if (!same)
-			console.log('expected', expectedResponse, 'actual', essentials);
+			console.log('expected', JSON.stringify(expectedResponse, null, 2), 'actual', JSON.stringify(essentials, null, 2));
 		delete expectedResponses[trigger_unit];
 	}
 	if (trigger_initial_unit !== last_trigger_unit) { 
