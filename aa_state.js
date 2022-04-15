@@ -132,7 +132,8 @@ async function lock() {
 }
 
 function getResponseEssentials(objAAResponse) {
-	const { mci, timestamp, bounced, aa_address, objResponseUnit, response: { responseVars }, balances } = objAAResponse;
+	const { mci, timestamp, bounced, aa_address, objResponseUnit, response: { responseVars }, balances: b } = objAAResponse;
+	let balances = _.cloneDeep(b);
 	delete balances.base; // ignore, fees are approximate
 	if (objResponseUnit) {
 		var messages = _.cloneDeep(objResponseUnit.messages);
