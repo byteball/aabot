@@ -145,6 +145,7 @@ function getResponseEssentials(objAAResponse) {
 				m.payload.outputs = m.payload.outputs.filter(o => o.address !== aa_address);
 			}
 		}
+		messages = messages.filter(m => m.app !== 'payment' || m.payload.outputs.length > 0);
 		messages.sort((m1, m2) => {
 			if (m1.app < m2.app)
 				return -1;
