@@ -132,7 +132,8 @@ async function lock() {
 }
 
 function getResponseEssentials(objAAResponse) {
-	const { mci, timestamp, bounced, aa_address, objResponseUnit, response: { responseVars } } = objAAResponse;
+	const { mci, timestamp, bounced, aa_address, objResponseUnit, response: { responseVars }, balances } = objAAResponse;
+	delete balances.base; // ignore, fees are approximate
 	if (objResponseUnit) {
 		var messages = _.cloneDeep(objResponseUnit.messages);
 		for (let m of messages) {
@@ -157,7 +158,7 @@ function getResponseEssentials(objAAResponse) {
 			return 1;
 		});
 	}
-	return { timestamp, bounced, responseVars, messages }; // mci is always wrong
+	return { timestamp, bounced, responseVars, messages, balances }; // mci is always wrong
 }
 
 async function onAAResponse(objAAResponse) {
