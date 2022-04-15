@@ -165,7 +165,7 @@ function getResponseEssentials(objAAResponse) {
 async function onAAResponse(objAAResponse) {
 	const unlock = await lock();
 	console.log(`onAAResponse`, objAAResponse);
-	const { aa_address, trigger_address, trigger_unit, trigger_initial_unit, updatedStateVars, balances } = objAAResponse;
+	const { aa_address, trigger_address, trigger_unit, trigger_initial_unit, updatedStateVars } = objAAResponse;
 	const expectedResponse = expectedResponses[trigger_unit];
 	if (expectedResponse) {
 		const essentials = getResponseEssentials(objAAResponse);
@@ -203,9 +203,9 @@ async function onAAResponse(objAAResponse) {
 			}
 		}
 	}
-	if (!balances) // balances are available only in light wallets, they are added to the notifications we receive from the light vendor
+	if (!objAAResponse.balances) // balances are available only in light wallets, they are added to the notifications we receive from the light vendor
 		throw Error("no balances in AA response");
-	balances[aa_address] = balances;
+	balances[aa_address] = objAAResponse.balances;
 //	await updateBalances(objAAResponse);
 	await replayPendingTriggers();
 	unlock();
