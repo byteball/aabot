@@ -162,6 +162,51 @@ function getResponseEssentials(objAAResponse) {
 	return { timestamp, bounced, responseVars, messages, balances }; // mci is always wrong
 }
 
+function getMaxDifference(v1, v2) {
+	if (v1 === v2)
+		return 0;
+	if (typeof v1 !== typeof v2)
+		return Infinity;
+	switch (typeof v1) {
+		case 'number':
+			return Math.abs(v1 - v2) / (v1 + v2) * 2;
+		case 'string':
+			try {
+				var j1 = JSON.parse(v1);
+				var j2 = JSON.parse(v2);
+			}
+			catch (e) {
+				return Infinity;
+			}
+			return getMaxDifference(j1, j2);
+		case 'object':
+			if (Array.isArray(v1) !== Array.isArray(v2))
+				return Infinity;
+			let max_diff = 0;
+			if (Array.isArray(v1)) {
+				if (v1.length !== v2.length)
+					return Infinity;
+				for (let i = 0; i < v1.length; i++) {
+					const diff = getMaxDifference(v1[i], v2[i]);
+					if (diff > max_diff)
+						max_diff = diff;
+				}
+			}
+			else {
+				if (!_.isEqual(Object.keys(v1).sort(), Object.keys(v2).sort()))
+					return Infinity;
+				for (let key in v1) {
+					const diff = getMaxDifference(v1[key], v2[key]);
+					if (diff > max_diff)
+						max_diff = diff;
+				}
+			}
+			return max_diff;
+		default:
+			return Infinity;
+	}
+}
+
 async function onAAResponse(objAAResponse) {
 	const unlock = await lock();
 	console.log(`onAAResponse`, objAAResponse);
@@ -171,7 +216,9 @@ async function onAAResponse(objAAResponse) {
 		const essentials = getResponseEssentials(objAAResponse);
 		const same = _.isEqual(expectedResponse, essentials);
 		const matches = same ? 'matches' : 'mismatches';
-		console.log(`trigger ${trigger_unit} from ${trigger_address} to ${aa_address}: response ${matches} expectations`);
+		const relDiff = (field) => (getMaxDifference(expectedResponse[field], essentials[field]) * 100).toPrecision(1) + '%';
+		const difference = same ? '' : `, ts ${relDiff('timestamp')}, r ${relDiff('responseVars')}, m ${relDiff('messages')}, b ${relDiff('balances')}`;
+		console.log(`trigger ${trigger_unit} from ${trigger_address} to ${aa_address}: response ${matches} expectations${difference}`);
 		if (!same)
 			console.log('expected', JSON.stringify(expectedResponse, null, 2), 'actual', JSON.stringify(essentials, null, 2));
 		delete expectedResponses[trigger_unit];
