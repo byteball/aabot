@@ -171,7 +171,12 @@ function getMaxDifference(v1, v2) {
 		case 'number':
 			return Math.abs(v1 - v2) / (v1 + v2) * 2;
 		case 'string':
+			if (v1.endsWith('%') && v2.endsWith('%')) {
+				v1 = v1.slice(0, -1);
+				v2 = v2.slice(0, -1);
+			}
 			try {
+				// JSON.parse() also converts strings to numbers "123" => 123)
 				var j1 = JSON.parse(v1);
 				var j2 = JSON.parse(v2);
 			}
