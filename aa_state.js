@@ -144,7 +144,8 @@ function getResponseEssentials(objAAResponse) {
 				if (!m.payload.asset)
 					m.payload.asset = 'base';
 				delete m.payload.inputs;
-				m.payload.outputs = m.payload.outputs.filter(o => o.address !== aa_address);
+				m.payload.outputs = m.payload.outputs.filter(o => o.address !== aa_address && o.amount > 0);
+				m.payload.outputs.sort((o1, o2) => o1.address < o2.address ? -1 : 1);
 			}
 		}
 		messages = messages.filter(m => m.app !== 'payment' || m.payload.outputs.length > 0);
