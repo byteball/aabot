@@ -229,13 +229,14 @@ async function onAAResponse(objAAResponse) {
 			console.log('expected', JSON.stringify(expectedResponse, null, 2), 'actual', JSON.stringify(essentials, null, 2));
 		delete expectedResponses[trigger_unit];
 	}
-	if (trigger_initial_unit !== last_trigger_unit) { 
+	const bRepeated = trigger_initial_unit === last_trigger_unit;
+	if (!bRepeated) { 
 		removeExecutedPendingTriggers(trigger_initial_unit);
 		last_trigger_unit = trigger_initial_unit;
 	}
 	else // we are called several times when a chain is executed
 		console.log(`repeated response to ${last_trigger_unit}`);
-	if (updatedStateVars) {
+	if (updatedStateVars && !bRepeated) {
 		for (let address in updatedStateVars) {
 			if (!stateVars[address])
 				stateVars[address] = {};
@@ -256,11 +257,15 @@ async function onAAResponse(objAAResponse) {
 			}
 		}
 	}
-	if (!objAAResponse.balances) // balances are available only in light wallets, they are added to the notifications we receive from the light vendor
-		throw Error("no balances in AA response");
-	balances[aa_address] = objAAResponse.balances;
+	if (!objAAResponse.allBalances) // balances are available only in light wallets, they are added to the notifications we receive from the light vendor
+		throw Error("no allBalances in AA response");
+	if (!bRepeated) {
+		for (let aa in objAAResponse.allBalances)
+			balances[aa] = objAAResponse.allBalances[aa];
+	}
 //	await updateBalances(objAAResponse);
-	await replayPendingTriggers();
+	if (!bRepeated)
+		await replayPendingTriggers();
 	unlock();
 	eventBus.emit('aa_response_applied-' + aa_address, objAAResponse);
 	eventBus.emit('aa_response_applied', objAAResponse);
