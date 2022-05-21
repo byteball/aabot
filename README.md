@@ -23,6 +23,7 @@ const conf = require('ocore/conf.js');
 const aa_state = require('aabot/aa_state.js');
 const dag = require('aabot/dag.js');
 const operator = require('aabot/operator.js');
+const tokenRegistry = require('aabot/tokenRegistry.js');
 const light_data_feeds = conf.bLight ? require('aabot/light_data_feeds.js') : null;
 
 ```
@@ -197,3 +198,20 @@ This node is a single-address wallet. Use
 const operator_address = operator.getAddress();
 ```
 to learn its address.
+
+
+### Token registry
+Get token symbol by asset:
+```js
+const tokenRegistry = require('aabot/tokenRegistry.js');
+
+const symbol = await tokenRegistry.getSymbolByAsset("AHVV8Um6AwHY9/nsX/YMZkWSBptWdn4g9aYVhNLcUWs="); // BNB
+```
+Get token asset by symbol:
+```js
+const asset = await tokenRegistry.getAssetBySymbol("BNB"); // AHVV8Um6AwHY9/nsX/YMZkWSBptWdn4g9aYVhNLcUWs=
+```
+Get token decimals by symbol or asset:
+```js
+const decimals = await tokenRegistry.getDecimalsBySymbolOrAsset("BNB"); // 4
+```
