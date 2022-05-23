@@ -3,33 +3,12 @@ const dag = require('./dag.js');
 const conf = require('ocore/conf.js');
 
 const tokenRegistryAddress = 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ';
-
 const CACHE_LIFETIME = conf.TOKEN_REGISTRY_CACHE_LIFETIME || 24 * 3600 * 1000; // 1 day in ms
-const CACHE_CLEAR_PERIOD = conf.TOKEN_REGISTRY_CACHE_CLEAR_PERIOD || 6 * 3600 * 1000; // 6 hours in ms
 
 const cache = {
   symbolByAsset: {},
   assetBySymbol: {},
   decimalsBySymbolOrAsset: {}
-}
-
-let lastCleanseTime = 0;
-
-const clearCache = () => {
-  if (!lastCleanseTime) {
-    lastCleanseTime = Date.now()
-    return;
-  } else if (lastCleanseTime + CACHE_CLEAR_PERIOD < Date.now()) {
-    Object.entries(cache).forEach(([cacheType, cacheByTokenRegistry]) => {
-      Object.entries(cacheByTokenRegistry).forEach(([tokenRegistryAddress, values]) => {
-        Object.entries(values).forEach(([key, { ts }]) => {
-          if (ts + CACHE_LIFETIME < Date.now()) {
-            delete cache[cacheType][tokenRegistryAddress][key];
-          }
-        });
-      });
-    });
-  }
 }
 
 async function getSymbolByAsset(asset, customTokenRegistryAddress) {
@@ -41,8 +20,6 @@ async function getSymbolByAsset(asset, customTokenRegistryAddress) {
   if (asset === '' || typeof asset !== 'string') throw Error(`not valid asset`);
 
   if (!isValidAddress(registryAddress)) throw Error(`not valid token registry address`);
-
-  clearCache();
 
   if (!(registryAddress in symbolByAssetCache)) symbolByAssetCache[registryAddress] = {};
 
@@ -66,8 +43,6 @@ async function getAssetBySymbol(symbol, customTokenRegistryAddress) {
   if (symbol === 'GBYTE' || symbol === 'MBYTE' || symbol === 'KBYTE' || symbol === 'BYTE') return 'base';
 
   if (!isValidAddress(registryAddress)) throw Error(`not valid token registry address`);
-
-  clearCache();
 
   if (!(registryAddress in assetBySymbolCache)) cache.assetBySymbol[registryAddress] = {};
 
@@ -93,8 +68,6 @@ async function getDecimalsBySymbolOrAsset(symbolOrAsset, customTokenRegistryAddr
   if (symbolOrAsset === 'base' || symbolOrAsset === 'GBYTE') {
     return 9;
   }
-
-  clearCache();
 
   let asset;
 
