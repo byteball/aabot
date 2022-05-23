@@ -1,87 +1,126 @@
 const { isValidAddress } = require('ocore/validation_utils');
 const dag = require('./dag.js');
+const conf = require('ocore/conf.js');
 
 const tokenRegistryAddress = 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ';
 
+const CACHE_LIFETIME = conf.TOKEN_REGISTRY_CACHE_LIFETIME || 24 * 3600 * 1000; // 1 day in ms
+const CACHE_CLEAR_PERIOD = conf.TOKEN_REGISTRY_CACHE_CLEAR_PERIOD || 6 * 3600 * 1000; // 6 hours in ms
+
+const cache = {
+  symbolByAsset: {},
+  assetBySymbol: {},
+  decimalsBySymbolOrAsset: {}
+}
+
+let lastCleanseTime = 0;
+
+const clearCache = () => {
+  if (!lastCleanseTime) {
+    lastCleanseTime = Date.now()
+    return;
+  } else if (lastCleanseTime + CACHE_CLEAR_PERIOD < Date.now()) {
+    Object.entries(cache).forEach(([cacheType, cacheByTokenRegistry]) => {
+      Object.entries(cacheByTokenRegistry).forEach(([tokenRegistryAddress, values]) => {
+        Object.entries(values).forEach(([key, { ts }]) => {
+          if (ts + CACHE_LIFETIME < Date.now()) {
+            delete cache[cacheType][tokenRegistryAddress][key];
+          }
+        });
+      });
+    });
+  }
+}
+
 async function getSymbolByAsset(asset, customTokenRegistryAddress) {
   const registryAddress = customTokenRegistryAddress || tokenRegistryAddress;
+  const symbolByAssetCache = cache.symbolByAsset;
 
-  if (asset === null || asset === 'base') {
-    return 'GBYTE';
-  }
-  if (typeof asset !== 'string') {
-    return null;
-  }
+  if (asset === 'base') return 'GBYTE';
 
-  if (!isValidAddress(registryAddress)) {
-    return null;
-  }
+  if (asset === '' || typeof asset !== 'string') throw Error(`not valid asset`);
+
+  if (!isValidAddress(registryAddress)) throw Error(`not valid token registry address`);
+
+  clearCache();
+
+  if (!(registryAddress in symbolByAssetCache)) symbolByAssetCache[registryAddress] = {};
+
+  if ((asset in symbolByAssetCache[registryAddress]) && symbolByAssetCache[registryAddress][asset].ts + CACHE_LIFETIME >= Date.now()) return symbolByAssetCache[registryAddress][asset].symbol;
 
   const symbol = await dag.readAAStateVar(registryAddress, `a2s_${asset}`);
 
   if (symbol) {
-    return symbol;
-  } else {
-    return asset.replace(/[+=]/, '').substr(0, 6);
+    cache.symbolByAsset[registryAddress][asset] = { symbol, ts: Date.now() };
   }
+
+  return symbol || null;
 }
 
 async function getAssetBySymbol(symbol, customTokenRegistryAddress) {
   const registryAddress = customTokenRegistryAddress || tokenRegistryAddress;
+  const assetBySymbolCache = cache.assetBySymbol;
 
-  if (typeof symbol !== 'string') {
-    return null;
-  }
+  if (symbol === '' || typeof symbol !== 'string') throw Error(`not valid symbol`);
 
-  if (symbol === 'GBYTE' || symbol === 'MBYTE' || symbol === 'KBYTE' || symbol === 'BYTE') {
-    return 'base';
-  }
+  if (symbol === 'GBYTE' || symbol === 'MBYTE' || symbol === 'KBYTE' || symbol === 'BYTE') return 'base';
 
-  if (!isValidAddress(registryAddress)) {
-    return null;
-  }
+  if (!isValidAddress(registryAddress)) throw Error(`not valid token registry address`);
+
+  clearCache();
+
+  if (!(registryAddress in assetBySymbolCache)) cache.assetBySymbol[registryAddress] = {};
+
+  if ((symbol in assetBySymbolCache[registryAddress]) && (assetBySymbolCache[registryAddress][symbol].ts + CACHE_LIFETIME >= Date.now())) return assetBySymbolCache[registryAddress][symbol].asset;
 
   const asset = await dag.readAAStateVar(registryAddress, `s2a_${symbol}`);
+
+  if (asset) {
+    cache.assetBySymbol[registryAddress][symbol] = { asset, ts: Date.now() };
+  }
 
   return asset || null;
 }
 
 async function getDecimalsBySymbolOrAsset(symbolOrAsset, customTokenRegistryAddress) {
   const registryAddress = customTokenRegistryAddress || tokenRegistryAddress;
+  const decimalsBySymbolOrAssetCache = cache.decimalsBySymbolOrAsset;
 
-  if (!isValidAddress(registryAddress)) {
-    return 0
-  }
+  if (!isValidAddress(registryAddress)) throw Error(`not valid token registry address`);
 
-  if (!symbolOrAsset) return 0;
-
-  if (typeof symbolOrAsset !== 'string') return 0;
+  if (symbolOrAsset === '' || typeof symbolOrAsset !== 'string') throw Error(`not valid symbol or asset`);
 
   if (symbolOrAsset === 'base' || symbolOrAsset === 'GBYTE') {
     return 9;
   }
+
+  clearCache();
 
   let asset;
 
   if (symbolOrAsset.length === 44) {
     asset = symbolOrAsset;
   } else if (symbolOrAsset === symbolOrAsset.toUpperCase()) {
-    asset = await dag.readAAStateVar(registryAddress, `s2a_${symbolOrAsset}`);
-
-    if (!asset) return 0;
+    asset = await getAssetBySymbol(symbolOrAsset, registryAddress);
+    if (!asset) return null;
   } else {
-    return 0;
+    return null;
   }
+
+  if (!(registryAddress in decimalsBySymbolOrAssetCache)) cache.decimalsBySymbolOrAsset[registryAddress] = {};
+
+  if ((asset in decimalsBySymbolOrAssetCache[registryAddress]) && (decimalsBySymbolOrAssetCache[registryAddress][asset].ts + CACHE_LIFETIME >= Date.now())) return decimalsBySymbolOrAssetCache[registryAddress][asset].decimals;
 
   const descHash = await dag.readAAStateVar(registryAddress, `current_desc_${asset}`);
 
-  if (!descHash) return 0;
+  if (!descHash) return null;
 
   const decimals = await dag.readAAStateVar(registryAddress, `decimals_${descHash}`);
 
   if (typeof decimals !== 'number') {
-    return 0;
+    return null;
   } else {
+    cache.decimalsBySymbolOrAsset[registryAddress][asset] = { decimals, ts: Date.now() };
     return decimals;
   }
 }
