@@ -86,12 +86,12 @@ async function getDecimalsBySymbolOrAsset(symbolOrAsset, customTokenRegistryAddr
 
   const descHash = await dag.readAAStateVar(registryAddress, `current_desc_${asset}`);
 
-  if (!descHash) return null;
+  if (!descHash) return 0;
 
   const decimals = await dag.readAAStateVar(registryAddress, `decimals_${descHash}`);
 
   if (typeof decimals !== 'number') {
-    return null;
+    return 0;
   } else {
     cache.decimalsBySymbolOrAsset[registryAddress][asset] = { decimals, ts: Date.now() };
     return decimals;
