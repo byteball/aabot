@@ -2,7 +2,7 @@ const { isValidAddress } = require('ocore/validation_utils');
 const dag = require('./dag.js');
 const conf = require('ocore/conf.js');
 
-const tokenRegistryAddress = 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ';
+const TOKEN_REGISTRY_ADDRESS = conf.TOKEN_REGISTRY_DEFAULT_ADDRESS || 'O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ';
 const CACHE_LIFETIME = conf.TOKEN_REGISTRY_CACHE_LIFETIME || 24 * 3600 * 1000; // 1 day in ms
 
 const cache = {
@@ -12,7 +12,7 @@ const cache = {
 }
 
 async function getSymbolByAsset(asset, customTokenRegistryAddress) {
-  const registryAddress = customTokenRegistryAddress || tokenRegistryAddress;
+  const registryAddress = customTokenRegistryAddress || TOKEN_REGISTRY_ADDRESS;
   const symbolByAssetCache = cache.symbolByAsset;
 
   if (asset === 'base') return 'GBYTE';
@@ -35,7 +35,7 @@ async function getSymbolByAsset(asset, customTokenRegistryAddress) {
 }
 
 async function getAssetBySymbol(symbol, customTokenRegistryAddress) {
-  const registryAddress = customTokenRegistryAddress || tokenRegistryAddress;
+  const registryAddress = customTokenRegistryAddress || TOKEN_REGISTRY_ADDRESS;
   const assetBySymbolCache = cache.assetBySymbol;
 
   if (symbol === '' || typeof symbol !== 'string') throw Error(`not valid symbol`);
@@ -58,7 +58,7 @@ async function getAssetBySymbol(symbol, customTokenRegistryAddress) {
 }
 
 async function getDecimalsBySymbolOrAsset(symbolOrAsset, customTokenRegistryAddress) {
-  const registryAddress = customTokenRegistryAddress || tokenRegistryAddress;
+  const registryAddress = customTokenRegistryAddress || TOKEN_REGISTRY_ADDRESS;
   const decimalsBySymbolOrAssetCache = cache.decimalsBySymbolOrAsset;
 
   if (!isValidAddress(registryAddress)) throw Error(`not valid token registry address`);
