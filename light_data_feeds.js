@@ -67,11 +67,14 @@ eventBus.on('new_joint', objJoint => {
 	if (!df_message)
 		return console.log('no data feed in unit', objUnit.unit);
 	const df = df_message.payload;
+	const updatedOracles = [];
 	for (let address of author_addresses)
 		for (let oracle of oracles)
 			if (oracle.address === address && df[oracle.feed_name]) {
 				console.log(`${objUnit.unit}: received new value of data feed ${oracle.address}:${oracle.feed_name}`, df[oracle.feed_name]);
 				const value = string_utils.getFeedValue(df[oracle.feed_name]);
+				if (oracle.value !== value)
+					updatedOracles.push(oracle);
 				oracle.value = value;
 				oracle.values[objUnit.timestamp] = value;
 				for (let ts in oracle.values) // delete old values
@@ -79,6 +82,8 @@ eventBus.on('new_joint', objJoint => {
 						delete oracle.values[ts];
 				oracle.ts = Date.now();
 			}
+	if (updatedOracles.length > 0)
+		eventBus.emit('updated_oracles', updatedOracles);
 });
 
 exports.updateDataFeed = updateDataFeed;
