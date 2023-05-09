@@ -110,7 +110,7 @@ function readAADefinition(aa_address, cb) {
 			err ? reject(err) : resolve(res);
 		}));
 	if (conf.bLight)
-		requestFromLightVendorWithRetries('light/get_definition', aa_address, response => cb(response.error, response));
+		requestFromLightVendorWithRetries('light/get_definition', aa_address, response => cb(response ? response.error : null, response));
 	else
 		storage.readAADefinition(db, aa_address, arrDefinition => {
 			cb(null, arrDefinition);
@@ -166,7 +166,7 @@ function requestFromLightVendorWithRetries(command, params, cb, count_retries) {
 		return new Promise(resolve => requestFromLightVendorWithRetries(command, params, resolve));
 	count_retries = count_retries || 0;
 	network.requestFromLightVendor(command, params, (ws, request, response) => {
-		if (response.error && Object.keys(response).length === 1) {
+		if (response && response.error && Object.keys(response).length === 1) {
 			if (response.error.startsWith('[internal]') || response.error.startsWith('[connect to light vendor failed]')) {
 				console.log(`got ${response.error} from ${command} ${JSON.stringify(params)}`);
 				if (count_retries > 3)
