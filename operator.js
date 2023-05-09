@@ -16,6 +16,7 @@ function readBalances(cb) {
 }
 
 async function start() {
+	await headlessWallet.waitTillReady();
 	return new Promise(resolve => {
 		headlessWallet.readFirstAddress(async (addr) => {
 			address = addr;
