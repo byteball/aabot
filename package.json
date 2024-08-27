@@ -14,8 +14,8 @@
 	],
 	"dependencies": {
 		"lodash": "^4.6.1",
-		"ocore": "git+https://github.com/byteball/ocore.git",
-		"headless-obyte": "git+https://github.com/byteball/headless-obyte.git"
+		"ocore": "git+https://github.com/byteball/ocore.git#v4",
+		"headless-obyte": "git+https://github.com/byteball/headless-obyte.git#v4"
 	},
 	"resolutions": {
 	}
