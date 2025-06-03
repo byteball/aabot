@@ -288,7 +288,7 @@ async function sendMessage({ to_address, amount, app, payload }) {
 		messages: [message],
 		paying_addresses: [operator.getAddress()],
 		change_address: operator.getAddress(),
-		spend_unconfirmed: 'all',
+		spend_unconfirmed: conf.spend_unconfirmed || 'all',
 	};
 	if (to_address)
 		opts.to_address = to_address;
@@ -311,7 +311,7 @@ async function sendPayment({ to_address, amount, asset, amountsByAsset, data, is
 	let opts = {
 		paying_addresses: [operator.getAddress()],
 		change_address: operator.getAddress(),
-		spend_unconfirmed: 'all',
+		spend_unconfirmed: conf.spend_unconfirmed || 'all',
 	};
 	if (amountsByAsset) {
 		opts.outputs_by_asset = {};
