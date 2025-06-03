@@ -276,7 +276,7 @@ async function defineAsset(assetProps = {}) {
 	return await sendMessage({ app: 'asset', payload: assetProps });
 }
 
-async function sendMessage({ to_address, amount, app, payload }) {
+async function sendMessage({ to_address, amount, app, payload, bRetrying }) {
 	let json = JSON.stringify(payload);
 	let message = {
 		app: app,
@@ -301,11 +301,16 @@ async function sendMessage({ to_address, amount, app, payload }) {
 	}
 	catch (e) {
 		console.error("failed to send " + json + " request: " + e);
+		if (conf.bLight && e.toString().includes("not in your genes") && !bRetrying) {
+			console.error("will retry in 30s");
+			await wait(30_000);
+			return sendMessage({ to_address, amount, app, payload, bRetrying: true })
+		}
 		return null;
 	}
 }
 
-async function sendPayment({ to_address, amount, asset, amountsByAsset, data, is_aa }) {
+async function sendPayment({ to_address, amount, asset, amountsByAsset, data, is_aa, bRetrying }) {
 	if (amountsByAsset && (amount || asset))
 		throw Error(`amountsByAsset combined with amount or asset`);
 	let opts = {
@@ -353,6 +358,11 @@ async function sendPayment({ to_address, amount, asset, amountsByAsset, data, is
 	}
 	catch (e) {
 		console.error("failed to send " + desc + " to " + to_address + ": " + e);
+		if (conf.bLight && e.toString().includes("not in your genes") && !bRetrying) {
+			console.error("will retry in 30s");
+			await wait(30_000);
+			return sendPayment({ to_address, amount, asset, amountsByAsset, data, is_aa, bRetrying: true })
+		}
 		return null;
 	}
 }
@@ -368,6 +378,9 @@ async function getAAResponseToTrigger(aa_address, trigger_unit) {
 }
 
 
+function wait(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 exports.readJoint = readJoint;
 exports.getLastStableUnitProps = getLastStableUnitProps;
