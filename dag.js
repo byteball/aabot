@@ -191,8 +191,8 @@ function readJoint(unit, cb, bRetrying) {
 		ifNotFound() {
 			if (!conf.bLight || bRetrying)
 				throw Error("unit not found: " + unit);
-			network.requestHistoryFor([unit], [], () => {
-				readJoint(unit, cb, true);
+			network.requestHistoryFor([unit], [], (err) => {
+				readJoint(unit, cb, !(err && err.includes('[internal]')));
 			});
 		}
 	});
