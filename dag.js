@@ -217,12 +217,13 @@ function getLastStableUnitProps(cb) {
 	}
 }
 
-async function sendAARequest(to_address, data) {
+async function sendAARequest(to_address, data, max_aa_responses) {
 	return await sendMessage({
 		to_address,
 		amount: constants.MIN_BYTES_BOUNCE_FEE,
 		app: 'data',
-		payload: data
+		payload: data,
+		max_aa_responses,
 	});
 }
 
@@ -276,7 +277,7 @@ async function defineAsset(assetProps = {}) {
 	return await sendMessage({ app: 'asset', payload: assetProps });
 }
 
-async function sendMessage({ to_address, amount, app, payload, bRetrying }) {
+async function sendMessage({ to_address, amount, app, payload, bRetrying, max_aa_responses }) {
 	let json = JSON.stringify(payload);
 	let message = {
 		app: app,
@@ -294,6 +295,8 @@ async function sendMessage({ to_address, amount, app, payload, bRetrying }) {
 		opts.to_address = to_address;
 	if (amount)
 		opts.amount = amount;
+	if (typeof max_aa_responses === 'number')
+		opts.max_aa_responses = max_aa_responses;
 	try {
 		let { unit } = await headlessWallet.sendMultiPayment(opts);
 		console.log("sent " + json + " request, unit " + unit);
