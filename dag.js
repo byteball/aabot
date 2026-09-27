@@ -169,8 +169,8 @@ function requestFromLightVendorWithRetries(command, params, cb, count_retries) {
 		if (response && response.error && Object.keys(response).length === 1) {
 			if (response.error.startsWith('[internal]') || response.error.startsWith('[connect to light vendor failed]')) {
 				console.log(`got ${response.error} from ${command} ${JSON.stringify(params)}`);
-				if (count_retries > 3)
-					throw Error("got error after 3 retries: " + response.error);
+				if (count_retries > 6)
+					throw Error("got error after 6 retries: " + response.error);
 				return setTimeout(() => requestFromLightVendorWithRetries(command, params, cb, count_retries + 1), 10000 * 2 ** count_retries);
 			}
 			else
